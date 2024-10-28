@@ -23,8 +23,6 @@ class Browser:
         self.logger.info("Setting options")
         options = Options()
 
-        # user_agent = UserAgent().chrome
-        # user_agent = UserAgent().safari
         user_agent = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ('
                       'KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
 
@@ -71,18 +69,15 @@ class Browser:
 
             reg_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon")
             version = winreg.QueryValueEx(reg_key, 'Version')[0]
-
-            self.logger.info(f"Chrome version: {version}")
-            return version.split(".")[0]
         else:
             output = subprocess.check_output(["google-chrome", "--version"])
             try:
                 version = output.decode("utf-8").split()[-1]
-
-                self.logger.info(f"Chrome version: {version}")
-                return version.split(".")[0]
             except Exception as error:
                 raise Exception(f"Ошибка при проверке версии браузера: {error}")
+
+        self.logger.info(f"Chrome version: {version}")
+        return version.split(".")[0]
 
     @staticmethod
     def action_chain(driver: uc.Chrome) -> ActionChains:
@@ -92,9 +87,10 @@ class Browser:
     def wait(driver: uc.Chrome, wait_time: int) -> WebDriverWait:
         return WebDriverWait(driver, wait_time)
 
-    def driver(self, keep_alive: bool) -> uc.Chrome:
+    @property
+    def driver(self) -> uc.Chrome:
         try:
-            return uc.Chrome(version=self.chrome_version, options=self.options, keep_alive=keep_alive)
+            return uc.Chrome(version=self.chrome_version, options=self.options)
         except Exception as error:
             raise Exception(error)
 
