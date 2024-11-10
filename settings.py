@@ -5,6 +5,8 @@ DEBUG = True
 
 PATH = Path(__file__).resolve().parent
 
+CASE_DIR = Path(r"C:\Users\96514502\Desktop\cases")
+
 CONFIG_PATH = PATH / 'config.yaml'
 ENV_PATH = PATH / 'secrets.env'
 LOG_FILE_PATH = PATH / 'app.log'

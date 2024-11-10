@@ -15,11 +15,11 @@ class Browser:
     def __init__(self) -> None:
         self.logger = Logger(self.__class__.__name__, to_file=False).set_logger()
 
-        self.options = self.__set_options
+        # self.options = self.__set_options
         self.chrome_version = self.__get_chrome_version
 
     @property
-    def __set_options(self) -> Options:
+    def __options(self) -> Options:
         self.logger.info("Setting options")
         options = Options()
 
@@ -86,11 +86,3 @@ class Browser:
     @staticmethod
     def wait(driver: uc.Chrome, wait_time: int) -> WebDriverWait:
         return WebDriverWait(driver, wait_time)
-
-    @property
-    def driver(self) -> uc.Chrome:
-        try:
-            return uc.Chrome(version=self.chrome_version, options=self.options)
-        except Exception as error:
-            raise Exception(error)
-
