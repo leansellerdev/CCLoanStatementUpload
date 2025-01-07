@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
@@ -8,23 +9,32 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from core.utils import Logger
 
-from settings import DEBUG
+from settings import DEBUG, RESULTS_PATH
 
 
 class Browser:
     def __init__(self) -> None:
         self.logger = Logger(self.__class__.__name__, to_file=False).set_logger()
 
-        # self.options = self.__set_options
+        self.options = self.__options
         self.chrome_version = self.__get_chrome_version
 
     @property
-    def __options(self) -> Options:
+    def __options(self) -> uc.ChromeOptions:
         self.logger.info("Setting options")
-        options = Options()
+        options = uc.ChromeOptions()
 
         user_agent = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ('
                       'KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36')
+
+        prefs = {
+            "download.default_directory": str(RESULTS_PATH),
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "plugins.always_open_pdf_externally": True
+        }
+
+        options.add_experimental_option("prefs", prefs)
 
         options.add_argument("--width=device-width")
         options.add_argument("--initial-scale=1")
@@ -63,7 +73,7 @@ class Browser:
         return options
 
     @property
-    def __get_chrome_version(self) -> str:
+    def __get_chrome_version(self) -> int:
         if os.name == 'nt':
             import winreg
 
@@ -77,7 +87,7 @@ class Browser:
                 raise Exception(f"Ошибка при проверке версии браузера: {error}")
 
         self.logger.info(f"Chrome version: {version}")
-        return version.split(".")[0]
+        return int(version.split(".")[0])
 
     @staticmethod
     def action_chain(driver: uc.Chrome) -> ActionChains:

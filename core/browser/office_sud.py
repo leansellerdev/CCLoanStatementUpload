@@ -36,7 +36,7 @@ class OfficeSud(Browser):
         self._STATEMENT_PAGE = self._BASE_URL + '/form/send/index.xhtml'
 
         self.nca_layer = NCALayer()
-        self.driver = uc.Chrome()
+        self.driver = uc.Chrome(version_main=self.chrome_version, options=self.options)
 
     def scroll_down(self) -> None:
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
@@ -80,7 +80,7 @@ class OfficeSud(Browser):
         tab_eds = self.driver.find_element(By.ID, 'tab-eds')
         tab_eds.click()
 
-        select_button = self.wait(self.driver, 5).until(
+        select_button = self.wait(self.driver, 60).until(
             ec.presence_of_element_located((By.CSS_SELECTOR,
                                            '[onclick="showLoader(); selectSignType(); return false;"]'))
         )
@@ -141,7 +141,6 @@ class OfficeSud(Browser):
             self.driver.get(self._STATEMENT_PAGE)
         time.sleep(5)
 
-        # TODO: Refresh page in case of error
         # Выбираем опции подачи иска
         self.__select_options()
 
@@ -237,7 +236,9 @@ class OfficeSud(Browser):
         search_button.click()
         time.sleep(1)
 
-        save_button = self.driver.find_element(By.ID, 'j_idt266:j_idt318')
+        save_button = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
+            (By.ID, 'j_idt266:j_idt318')
+        ))
         save_button.click()
 
     def add_participant(self, iin=None) -> None:
@@ -280,7 +281,7 @@ class OfficeSud(Browser):
         self.__select_court()
         time.sleep(5)
 
-    def fill_payment(self, statement_sum) -> None:
+    def fill_payment(self, statement_sum: str) -> None:
         kbk = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:selectKbk')
         kbk_select = Select(kbk)
 
@@ -293,15 +294,28 @@ class OfficeSud(Browser):
 
         state_duty_field = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:edit-duty')
         state_duty_field.clear()
-        state_duty_field.send_keys(statement_sum * 0.01)
+        state_duty_field.send_keys(int(statement_sum) * 0.03)
         time.sleep(5)
 
-    def upload_file(self, input_path: str, file_path: str) -> None:
-        file_input = self.driver.find_element(By.ID, input_path)
+    def upload_payment(self, input_path: str, file_path: str) -> None:
+        file_input = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.ID, input_path)
+        ))
         file_input.click()
         time.sleep(2)
 
-        keyboard.send_keys(file_path, pause=0)
+        keyboard.send_keys(str(file_path), pause=0)
+        keyboard.send_keys('{ENTER}')
+        time.sleep(2)
+
+    def upload_file(self, input_path: str, file_path: str) -> None:
+        file_input = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.CSS_SELECTOR, input_path)
+        ))
+        file_input.click()
+        time.sleep(2)
+
+        keyboard.send_keys(str(file_path), pause=0)
         keyboard.send_keys('{ENTER}')
         time.sleep(2)
 
@@ -318,17 +332,12 @@ class OfficeSud(Browser):
         text_area.send_keys(base_req)
         time.sleep(2)
 
-    def process(self, iin: str, statement_sum) -> None:
-        case_folder = CASE_DIR / iin
-        statement_path = case_folder / f'Исковое_Заявление_{iin}.docx'
-
-        self.login_via_key()
-        self.choose_options()
-
+    def fill_data_page(self, iin: str) -> None:
         self.fill_data()
 
         self.add_participant()
         time.sleep(5)
+
         self.add_participant(iin)
         time.sleep(5)
 
@@ -337,24 +346,96 @@ class OfficeSud(Browser):
         next_page_button.click()
         time.sleep(5)
 
-        check_upload_path = 'j_idt37:j_idt39:j_idt42:personTableRows:0:j_idt126'
+    def payment_page(self, statement_sum: str, iin: str) -> None:
+        case_folder = CASE_DIR / iin
+
+        payment_upload_path = 'j_idt37:j_idt39:j_idt42:personTableRows:0:j_idt126'
         self.fill_payment(statement_sum)
-        self.upload_file(check_upload_path, case_folder / 'dogovor_940928451011_1523595.pdf')
+
+        # TODO: сделать загрузку чека
+        self.upload_payment(payment_upload_path, case_folder / 'doc_6.pdf')
+        time.sleep(5)
 
         next_page_button = self.driver.find_element(By.XPATH,
                                                     '//*[@id="j_idt37:j_idt39:j_idt42"]/div[2]/div[1]/div[2]/div/a[2]')
         next_page_button.click()
         time.sleep(5)
 
+    def upload_files_page(self, iin: str) -> None:
+        case_folder = CASE_DIR / iin
+
+        statement_path = case_folder / f'Исковое_Заявление_{iin}.docx'
+        doc_6_path = case_folder / 'doc_6.pdf'
+        licence_path = case_folder / 'licence.pdf'
+        hod_path = case_folder / 'Ходатайство_об_отмене_упр_производства.docx'
+
+        dogovor_path = [file for file in case_folder.iterdir() if 'dogovor' in str(file)][0]
+        dolg_path = [file for file in case_folder.iterdir() if 'dolg' in str(file)][0]
+        uved_path = [file for file in case_folder.iterdir() if 'uvedomlenie' in str(file)][0]
+
+        docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path]
+
+        self.upload_file('[value="Загрузить иск"]', statement_path)
+
+        for i, doc in enumerate(docs):
+            self.upload_file('[value="Прикрепить файл"]', doc)
+
+            self.wait(self.driver, 60).until(ec.visibility_of_element_located(
+                (By.CSS_SELECTOR, '[value="Прикрепить файл"]')
+            ))
+
         self.fill_statement_requirements()
 
-        self.upload_file('j_idt37:j_idt39:j_idt42:j_idt70', statement_path)
+        next_page_button = self.driver.find_element(By.XPATH,
+                                                    '//*[@id="j_idt37:j_idt39:j_idt42"]/div[2]/div[1]/div/a[2]')
+        next_page_button.click()
+        time.sleep(5)
+
+    def sign_statement_page(self) -> None:
+        choose_eds_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.CSS_SELECTOR, '[onclick="showLoader(); selectSignType(); return false;"]')
+        ))
+
+        choose_eds_button.click()
+
+        self.nca_layer.choose_key()
+        time.sleep(5)
+
+    def result_page(self) -> None:
+        safe_talon_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.ID, 'j_idt37:j_idt39:j_idt42:j_idt46')
+        ))
+
+        safe_talon_button.click()
+        time.sleep(5)
+
+    def process(self, iin: str, statement_sum: str) -> None:
+        self.logger.info("Логинимся на сайте")
+        self.login_via_key()
+
+        self.logger.info("Выбираем опции иска")
+        self.choose_options()
+
+        self.logger.info("Заполняем данные иска")
+        self.fill_data_page(iin)
+
+        self.logger.info("Указываем данные платежа + загружаем чек")
+        self.payment_page(statement_sum, iin)
+
+        self.logger.info("Загружаем файлы")
+        self.upload_files_page(iin)
+
+        self.logger.info("Подписываем подачу иска")
+        self.sign_statement_page()
+
+        self.logger.info("Скачиваем итоговый файл")
+        self.result_page()
 
 
 if __name__ == '__main__':
     try:
         uploader = OfficeSud()
-        uploader.process('940430300866', 23000)
+        uploader.process('940928451011', "60000")
         time.sleep(6000)
     except (KeyboardInterrupt, SystemExit):
         print("Interrupted!")
