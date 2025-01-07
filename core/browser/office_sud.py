@@ -1,8 +1,8 @@
+import os
 import time
 
 import undetected_chromedriver as uc
 from pywinauto import keyboard
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.common import NoSuchElementException, NoSuchAttributeException
 from selenium.webdriver.support import expected_conditions as ec
@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import Select
 
 from core.browser import Browser
 from core.desktop import NCALayer
-from settings import CASE_DIR
+from settings import CASE_DIR, RESULTS_PATH
 
 
 class OfficeSud(Browser):
@@ -28,8 +28,9 @@ class OfficeSud(Browser):
 
     KBK = '2'
 
-    def __init__(self):
+    def __init__(self, logger):
         super().__init__()
+        self.logger = logger
 
         self._BASE_URL = 'https://office.sud.kz/new/'
         self._SUD_URL = self._BASE_URL + 'index.xhtml'
@@ -352,8 +353,7 @@ class OfficeSud(Browser):
         payment_upload_path = 'j_idt37:j_idt39:j_idt42:personTableRows:0:j_idt126'
         self.fill_payment(statement_sum)
 
-        # TODO: сделать загрузку чека
-        self.upload_payment(payment_upload_path, case_folder / 'doc_6.pdf')
+        self.upload_payment(payment_upload_path, case_folder / 'payment.pdf')
         time.sleep(5)
 
         next_page_button = self.driver.find_element(By.XPATH,
@@ -409,6 +409,15 @@ class OfficeSud(Browser):
         safe_talon_button.click()
         time.sleep(5)
 
+    @staticmethod
+    def move_result_notification(iin: str) -> None:
+        files = os.listdir(RESULTS_PATH)
+        paths = [os.path.join(RESULTS_PATH, filename) for filename in files]
+
+        latest_file = max(paths, key=os.path.getctime)
+
+        os.rename(latest_file, CASE_DIR / iin / 'уведомление_об_отправке.pdf')
+
     def process(self, iin: str, statement_sum: str) -> None:
         self.logger.info("Логинимся на сайте")
         self.login_via_key()
@@ -431,11 +440,5 @@ class OfficeSud(Browser):
         self.logger.info("Скачиваем итоговый файл")
         self.result_page()
 
-
-if __name__ == '__main__':
-    try:
-        uploader = OfficeSud()
-        uploader.process('940928451011', "60000")
-        time.sleep(6000)
-    except (KeyboardInterrupt, SystemExit):
-        print("Interrupted!")
+        self.move_result_notification(iin)
+        self.driver.close()

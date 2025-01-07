@@ -1,9 +1,7 @@
 import os
 import subprocess
-import time
 
 import undetected_chromedriver as uc
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -14,7 +12,7 @@ from settings import DEBUG, RESULTS_PATH
 
 class Browser:
     def __init__(self) -> None:
-        self.logger = Logger(self.__class__.__name__, to_file=False).set_logger()
+        self.logger = Logger(self.__class__.__name__).set_logger()
 
         self.options = self.__options
         self.chrome_version = self.__get_chrome_version
