@@ -10,6 +10,7 @@ from selenium.webdriver.support.ui import Select
 
 from core.browser import Browser
 from core.desktop import NCALayer
+from core.utils import Logger
 from settings import CASE_DIR, RESULTS_PATH
 
 
@@ -372,8 +373,9 @@ class OfficeSud(Browser):
         dogovor_path = [file for file in case_folder.iterdir() if 'dogovor' in str(file)][0]
         dolg_path = [file for file in case_folder.iterdir() if 'dolg' in str(file)][0]
         uved_path = [file for file in case_folder.iterdir() if 'uvedomlenie' in str(file)][0]
+        yur_dogovor_path = [file for file in case_folder.iterdir() if 'Договор' in str(file)][0]
 
-        docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path]
+        docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path, yur_dogovor_path]
 
         self.upload_file('[value="Загрузить иск"]', statement_path)
 

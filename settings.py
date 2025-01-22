@@ -3,6 +3,8 @@ from pathlib import Path
 
 DEBUG = True
 
+TG_BOT_TOKEN = '7471120443:AAG-JD6F77s_ENR0TztsBpuDhYsPqNInDMU'
+
 PATH = Path(__file__).resolve().parent
 
 CASE_DIR = Path(r"C:\Users\96514502\Desktop\cases")
