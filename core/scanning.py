@@ -6,16 +6,16 @@ from pathlib import Path
 from settings import CASE_DIR
 
 
-def get_statement_sum(folder_name: Path):
-    filename = folder_name / 'statement_sum.json'
+def get_statement_info(folder_name: Path) -> dict:
+    filename = folder_name / 'statement_info.json'
 
-    with open(filename, 'r') as openfile:
+    with open(filename, 'r', encoding='utf-8') as openfile:
         json_object = json.load(openfile)
 
-    return json_object.get('sum')
+    return json_object
 
 
-def scan_folders():
+def scan_folders() -> str:
     folders = os.listdir(CASE_DIR)
 
     for folder in folders:
@@ -27,9 +27,7 @@ def scan_folders():
         if 'уведомление_об_отправке.pdf' in str(files):
             continue
 
-        for file in files:
-            if 'payment' in str(file):
-                return folder
+        return folder
 
 
 scan_folders()

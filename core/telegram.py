@@ -1,8 +1,10 @@
+from datetime import datetime
+
 import requests
 from settings import TG_BOT_TOKEN
 
 
-def get_uodates():
+def get_updates():
     token = TG_BOT_TOKEN
     url = f"https://api.telegram.org/bot{token}/getUpdates"
 
@@ -10,34 +12,39 @@ def get_uodates():
     return response.json()
 
 
-def send_logs(message, log_file=None):
+def prepare_message(statement_info: dict) -> str:
+    message = f"""ИИН: {statement_info.get('iin')}
+    ФИО: {statement_info.get('name')}
+    ID ЗАЙМА: {statement_info.get('credit_id')}
+    СУММА ИСКА: {statement_info.get('final_summa')}
+    СУММА ГОСПОШЛИНЫ: {statement_info.get('state_duty')}
+    УНИКАЛЬНЫЙ КОД ПЛАТЕЖА: <b>{statement_info.get('payment_code')}</b>
+    ДАТА ЗАГРУЗКИ ИСКА: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}
+    """
+
+    return message
+
+
+def send_payment_info(statement_info: dict) -> str:
+    message = prepare_message(statement_info)
+
     token = TG_BOT_TOKEN
     chat_ids = ["-4553001971", "-2227234613"]
 
     responses = []
 
     for chat_id in chat_ids:
-        if log_file:
-            url = f"https://api.telegram.org/bot{token}/sendDocument"
-            with open(log_file, "rb") as sendfile:
-                response = requests.post(
-                    url,
-                    data={
-                        "chat_id": chat_id,
-                        "caption": message
-                    },
-                    files={"document": sendfile}
-                )
-        else:
-            url = f"https://api.telegram.org/bot{token}/sendMessage"
-            response = requests.get(
-                url,
-                params={'chat_id': chat_id, 'text': message}
-            )
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        response = requests.get(
+            url,
+            params={
+                'chat_id': chat_id,
+                'text': message,
+                'parse_mode': 'html'
+            }
+        )
 
         if response.status_code != 200:
             return f"Ошибка при отправке логов: {response.text}"
 
         responses.append({chat_id: response.text})
-
-    return response.text

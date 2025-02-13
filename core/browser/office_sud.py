@@ -1,3 +1,4 @@
+import json
 import os
 import time
 
@@ -10,7 +11,9 @@ from selenium.webdriver.support.ui import Select
 
 from core.browser import Browser
 from core.desktop import NCALayer
-from core.utils import Logger
+
+from core.telegram import send_payment_info
+
 from settings import CASE_DIR, RESULTS_PATH
 
 
@@ -209,7 +212,9 @@ class OfficeSud(Browser):
         goto_button.click()
 
     def fill_requisites(self) -> None:
-        bin_field = self.driver.find_element(By.ID, 'j_idt199:org-bin')
+        bin_field = self.wait(self.driver, 10).until(ec.presence_of_element_located(
+            (By.ID, 'j_idt199:org-bin')
+        ))
         bin_field.send_keys(self.ORG_BIN)
         bin_field.click()
 
@@ -229,7 +234,9 @@ class OfficeSud(Browser):
         save_button.click()
 
     def fill_fiz_info(self, iin: str) -> None:
-        iin_field = self.driver.find_element(By.ID, 'j_idt266:person-iin')
+        iin_field = self.wait(self.driver, 10).until(ec.presence_of_element_located(
+            (By.ID, 'j_idt266:person-iin')
+        ))
         iin_field.send_keys(iin)
 
         search_button = self.wait(self.driver, 10).until(ec.presence_of_element_located(
@@ -283,8 +290,10 @@ class OfficeSud(Browser):
         self.__select_court()
         time.sleep(5)
 
-    def fill_payment(self, statement_sum: str) -> None:
-        kbk = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:selectKbk')
+    def fill_payment(self, statement_sum: str, state_duty: str) -> None:
+        kbk = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.ID, 'j_idt37:j_idt39:j_idt42:selectKbk')
+        ))
         kbk_select = Select(kbk)
 
         kbk_select.select_by_value(self.KBK)
@@ -296,8 +305,24 @@ class OfficeSud(Browser):
 
         state_duty_field = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:edit-duty')
         state_duty_field.clear()
-        state_duty_field.send_keys(int(statement_sum) * 0.03)
+        state_duty_field.send_keys(state_duty)
         time.sleep(5)
+
+    def online_payment(self) -> None:
+        check_box = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:isonline-payment')
+        check_box.click()
+
+        online_payment_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.XPATH, '//*[@id="j_idt37:j_idt39:j_idt42:personTableRows:0:paymentButton"]/a')
+        ))
+        online_payment_button.click()
+
+    def get_payment_code(self) -> str:
+        payment_code = self.wait(self.driver, 10).until(ec.presence_of_element_located(
+            (By.ID, 'ctl00_CPH1_payCodeValue')
+        )).text
+
+        return payment_code
 
     def upload_payment(self, input_path: str, file_path: str) -> None:
         file_input = self.wait(self.driver, 60).until(ec.presence_of_element_located(
@@ -319,7 +344,7 @@ class OfficeSud(Browser):
 
         keyboard.send_keys(str(file_path), pause=0)
         keyboard.send_keys('{ENTER}')
-        time.sleep(2)
+        time.sleep(3)
 
     def fill_statement_requirements(self):
         base_req = 'ИСКОВОЕ ЗАЯВЛЕНИЕ о взыскании задолженности по договору о предоставлении микрокредита'
@@ -348,19 +373,33 @@ class OfficeSud(Browser):
         next_page_button.click()
         time.sleep(5)
 
-    def payment_page(self, statement_sum: str, iin: str) -> None:
-        case_folder = CASE_DIR / iin
+    def payment_page(self, statement_sum: str, state_duty: str) -> str:
+        self.fill_payment(statement_sum, state_duty)
 
-        payment_upload_path = 'j_idt37:j_idt39:j_idt42:personTableRows:0:j_idt126'
-        self.fill_payment(statement_sum)
+        self.online_payment()
+        payment_code = self.get_payment_code()
 
-        self.upload_payment(payment_upload_path, case_folder / 'payment.pdf')
+        time.sleep(3)
+        self.driver.back()
+
+        check_box = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:isonline-payment')
+        check_box.click()
+
+        time.sleep(5)
+        check_box.click()
+
+        check_status_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+            (By.CSS_SELECTOR, '[onclick="doCheckPayments(); return false;"]')
+        ))
+        check_status_button.click()
         time.sleep(5)
 
-        next_page_button = self.driver.find_element(By.XPATH,
-                                                    '//*[@id="j_idt37:j_idt39:j_idt42"]/div[2]/div[1]/div[2]/div/a[2]')
+        next_page_button = self.driver.find_element(By.CSS_SELECTOR,
+                                                    '[onclick="fillHideFields(); goToDocuments(); return false;"]')
         next_page_button.click()
         time.sleep(5)
+
+        return payment_code
 
     def upload_files_page(self, iin: str) -> None:
         case_folder = CASE_DIR / iin
@@ -420,7 +459,7 @@ class OfficeSud(Browser):
 
         os.rename(latest_file, CASE_DIR / iin / 'уведомление_об_отправке.pdf')
 
-    def process(self, iin: str, statement_sum: str) -> None:
+    def process(self, statement_info: dict) -> None:
         self.logger.info("Логинимся на сайте")
         self.login_via_key()
 
@@ -428,13 +467,14 @@ class OfficeSud(Browser):
         self.choose_options()
 
         self.logger.info("Заполняем данные иска")
-        self.fill_data_page(iin)
+        self.fill_data_page(statement_info.get('iin'))
 
-        self.logger.info("Указываем данные платежа + загружаем чек")
-        self.payment_page(statement_sum, iin)
+        self.logger.info("Указываем данные платежа + берем идентификатор платежа")
+        payment_code = self.payment_page(statement_info.get('final_summa'), statement_info.get('state_duty'))
+        statement_info['payment_code'] = payment_code
 
         self.logger.info("Загружаем файлы")
-        self.upload_files_page(iin)
+        self.upload_files_page(statement_info.get('iin'))
 
         self.logger.info("Подписываем подачу иска")
         self.sign_statement_page()
@@ -442,5 +482,7 @@ class OfficeSud(Browser):
         self.logger.info("Скачиваем итоговый файл")
         self.result_page()
 
-        self.move_result_notification(iin)
+        self.move_result_notification(statement_info.get('iin'))
         self.driver.close()
+
+        send_payment_info(statement_info)

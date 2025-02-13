@@ -1,17 +1,12 @@
-import sys
-
-from apscheduler import Scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from core.browser.office_sud import OfficeSud
-from core.scanning import get_statement_sum, scan_folders
+from core.scanning import get_statement_info, scan_folders
 
-from core.utils.logger import Logger
+from loguru import logger
 
-from core.telegram import send_logs
-from settings import LOG_FILE_PATH, CASE_DIR
-
-logger = Logger(__name__).set_logger()
+from settings import CASE_DIR
 
 
 class App:
@@ -21,41 +16,39 @@ class App:
         return OfficeSud(logger=logger)
 
     @staticmethod
-    def get_data_to_upload() -> tuple[str, str]:
+    def get_data_to_upload() -> tuple[str, dict]:
         iin = scan_folders()
 
         if iin is not None:
-            statement_sum = get_statement_sum(CASE_DIR / iin)
-            logger.info(f"Получили чек об оплате для ИИН: {iin}. Сумма иска: {statement_sum}")
+            statement_info = get_statement_info(CASE_DIR / iin)
 
-            return iin, str(statement_sum)
+            return iin, statement_info
 
     def run(self) -> None:
         try:
-            iin, statement_sum = self.get_data_to_upload()
+            iin, statement_info = self.get_data_to_upload()
         except TypeError:
             logger.warning(f"Нет готовых исков для загрузки")
             return
 
         try:
-            self.parser.process(iin, statement_sum)
+            self.parser.process(statement_info)
         except Exception as process_error:
-            logger.error(process_error, exc_info=True)
-            send_logs(process_error.with_traceback(sys.exc_info()[2]), log_file=LOG_FILE_PATH)
+            logger.error(str(process_error), exc_info=True)
 
 
 trigger = IntervalTrigger(minutes=1)
-scheduler = Scheduler(logger=logger)
+scheduler = BackgroundScheduler(logger=logger)
 
 
 if __name__ == '__main__':
     app = App()
 
-    # try:
-    scheduler.add_schedule(app.run, trigger)
-    scheduler.start_in_background()
-    # except (KeyboardInterrupt, SystemExit):
-    #     logger.error('Interrupted')
-    # except Exception as unexpected_error:
-    #     logger.error(unexpected_error, exc_info=True)
-    #     send_logs(unexpected_error, log_file=LOG_FILE_PATH)
+    try:
+        scheduler.add_job(app.run, trigger)
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        logger.error('Interrupted')
+    except Exception as unexpected_error:
+        logger.error(str(unexpected_error), exc_info=True)
+        # send_logs(unexpected_error, log_file=LOG_FILE_PATH)
