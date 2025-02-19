@@ -15,8 +15,6 @@ from core.telegram import send_payment_info
 
 from settings import CASE_DIR, RESULTS_PATH
 
-from loguru import logger
-
 
 class OfficeSud(Browser):
     CASE_TYPE = 'CIVIL'
@@ -338,7 +336,7 @@ class OfficeSud(Browser):
         time.sleep(2)
 
     def upload_file(self, input_path: str, file_path: str) -> None:
-        file_input = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+        file_input = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
             (By.CSS_SELECTOR, input_path)
         ))
         file_input.click()
@@ -385,6 +383,9 @@ class OfficeSud(Browser):
         self.driver.back()
 
         check_box = self.driver.find_element(By.XPATH, '//input[contains(@id, "isonline-payment")]')
+        # check_box = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
+        #     (By.XPATH, '//input[contains(@id, "ad")]')
+        # ))
         check_box.click()
 
         time.sleep(5)
@@ -487,4 +488,6 @@ class OfficeSud(Browser):
         self.move_result_notification(statement_info.get('iin'))
         self.driver.close()
 
-        send_payment_info(statement_info)
+        notification_path = CASE_DIR / statement_info.get('iin') / 'уведомление_об_отправке.pdf'
+
+        send_payment_info(statement_info, notification_path)

@@ -48,27 +48,23 @@ def send_logs(log_file: str = LOG_FILE_PATH, message: str = 'log'):
     return response
 
 
-def send_payment_info(statement_info: dict) -> str:
+def send_payment_info(statement_info: dict, notification_path: str = None) -> None:
     message = prepare_message(statement_info)
 
     responses = []
 
-    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
-    response = requests.get(
-        url,
-        params={
-            'chat_id': PAYMENTS_CHAT_ID,
-            'text': message,
-            'parse_mode': 'html'
-        }
-    )
-
-    if response.status_code != 200:
-        return f"Ошибка при отправке логов: {response.text}"
+    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendDocument"
+    with open(notification_path, 'rb') as send_file:
+        response = requests.post(
+            url,
+            data={
+                'chat_id': PAYMENTS_CHAT_ID,
+                'caption': message,
+                'parse_mode': 'html'
+            },
+            files={
+                'document': send_file,
+            }
+        )
 
     responses.append({PAYMENTS_CHAT_ID: response.text})
-
-
-if __name__ == '__main__':
-    updates = send_logs()
-    print(updates.text)

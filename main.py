@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -42,12 +44,12 @@ class App:
         try:
             self.parser.process(statement_info)
         except Exception as process_error:
-            logger.error(str(process_error), exc_info=True
-            )
+            logger.error(str(process_error), exc_info=True)
             send_logs(message=str(process_error))
+            self.parser.driver.close()
 
 
-trigger = IntervalTrigger(minutes=1)
+trigger = IntervalTrigger(minutes=1, start_date=datetime.now() + timedelta(seconds=5))
 scheduler = BlockingScheduler(logger=logger)
 
 
