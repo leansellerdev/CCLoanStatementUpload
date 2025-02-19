@@ -1,7 +1,10 @@
 from datetime import datetime
 
 import requests
-from settings import TG_BOT_TOKEN
+from settings import TG_BOT_TOKEN, LOG_FILE_PATH, PROJECT_NAME
+
+LOGS_CHAT_ID = '-4751461230'
+PAYMENTS_CHAT_ID = '-4553001971'
 
 
 def get_updates():
@@ -25,26 +28,47 @@ def prepare_message(statement_info: dict) -> str:
     return message
 
 
-def send_payment_info(statement_info: dict) -> str:
-    message = prepare_message(statement_info)
+def send_logs(log_file: str = LOG_FILE_PATH, message: str = 'log'):
+    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendDocument"
 
-    token = TG_BOT_TOKEN
-    chat_ids = ["-4553001971", "-2227234613"]
+    message = f'Процесс: {PROJECT_NAME}\n' + message
 
-    responses = []
-
-    for chat_id in chat_ids:
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
-        response = requests.get(
+    with open(log_file, 'rb') as send_file:
+        response = requests.post(
             url,
-            params={
-                'chat_id': chat_id,
-                'text': message,
-                'parse_mode': 'html'
+            data={
+                'chat_id': LOGS_CHAT_ID,
+                'caption': message,
+            },
+            files={
+                'document': send_file,
             }
         )
 
-        if response.status_code != 200:
-            return f"Ошибка при отправке логов: {response.text}"
+    return response
 
-        responses.append({chat_id: response.text})
+
+def send_payment_info(statement_info: dict) -> str:
+    message = prepare_message(statement_info)
+
+    responses = []
+
+    url = f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage"
+    response = requests.get(
+        url,
+        params={
+            'chat_id': PAYMENTS_CHAT_ID,
+            'text': message,
+            'parse_mode': 'html'
+        }
+    )
+
+    if response.status_code != 200:
+        return f"Ошибка при отправке логов: {response.text}"
+
+    responses.append({PAYMENTS_CHAT_ID: response.text})
+
+
+if __name__ == '__main__':
+    updates = send_logs()
+    print(updates.text)

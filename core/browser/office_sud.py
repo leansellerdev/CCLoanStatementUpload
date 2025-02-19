@@ -1,4 +1,3 @@
-import json
 import os
 import time
 
@@ -15,6 +14,8 @@ from core.desktop import NCALayer
 from core.telegram import send_payment_info
 
 from settings import CASE_DIR, RESULTS_PATH
+
+from loguru import logger
 
 
 class OfficeSud(Browser):
@@ -111,19 +112,19 @@ class OfficeSud(Browser):
         )
 
     def __select_case_type(self) -> None:
-        case_type = self.driver.find_element(By.ID, 'j_idt36:j_idt38:j_idt39:case-type')
+        case_type = self.driver.find_element(By.XPATH, '//select[contains(@id, "case-type")]')
         case_type_select = Select(case_type)
 
         case_type_select.select_by_value(self.CASE_TYPE)
 
     def __select_instance(self) -> None:
-        instance = self.driver.find_element(By.ID, 'j_idt36:j_idt38:j_idt39:instance')
+        instance = self.driver.find_element(By.XPATH, '//select[contains(@id, "instance")]')
         instance_type_select = Select(instance)
 
         instance_type_select.select_by_value(self.INSTANCE)
 
     def __select_doc_type(self) -> None:
-        doct_type = self.driver.find_element(By.ID, 'j_idt36:j_idt38:j_idt39:request')
+        doct_type = self.driver.find_element(By.XPATH, '//select[contains(@id, "request")]')
         doct_type_select = Select(doct_type)
 
         doct_type_select.select_by_value(self.DOC_TYPE)
@@ -157,25 +158,25 @@ class OfficeSud(Browser):
         send_button.click()
 
     def __select_category_group(self) -> None:
-        category_group = self.driver.find_element(By.ID, 'j_idt39:j_idt41:j_idt44:edit-categoryGroup')
+        category_group = self.driver.find_element(By.XPATH, '//select[contains(@id, "edit-categoryGroup")]')
 
         category_group_select = Select(category_group)
         category_group_select.select_by_value(self.CAT_GROUP)
 
     def __select_category(self) -> None:
-        category = self.driver.find_element(By.ID, 'j_idt39:j_idt41:j_idt44:edit-category')
+        category = self.driver.find_elements(By.XPATH, '//select[contains(@id, "edit-category")]')[-1]
 
         category_select = Select(category)
         category_select.select_by_value(self.CAT)
 
     def __select_statement_character(self) -> None:
-        statement_character = self.driver.find_element(By.ID, 'j_idt39:j_idt41:j_idt44:edit-character')
+        statement_character = self.driver.find_element(By.XPATH, '//select[contains(@id, "edit-character")]')
 
         statement_character_select = Select(statement_character)
         statement_character_select.select_by_value(self.STATEMENT_CHARACTER)
 
     def __select_district(self) -> None:
-        district = self.driver.find_element(By.ID, 'j_idt39:j_idt41:j_idt44:edit-district')
+        district = self.driver.find_element(By.XPATH, '//select[contains(@id, "edit-district")]')
         district.click()
         time.sleep(5)
         district.click()
@@ -184,13 +185,13 @@ class OfficeSud(Browser):
         district_select.select_by_value(self.DISCTRICT)
 
     def __select_court(self) -> None:
-        court = self.driver.find_element(By.ID, 'j_idt39:j_idt41:j_idt44:edit-court')
+        court = self.driver.find_element(By.XPATH, '//select[contains(@id, "edit-court")]')
 
         court_select = Select(court)
         court_select.select_by_value(self.COURT)
 
     def set_participant_type(self, participant_type=None) -> None:
-        type_ = self.driver.find_element(By.ID, 'j_idt173:pp-type')
+        type_ = self.driver.find_element(By.XPATH, '//select[contains(@id, "pp-type")]')
         type_select = Select(type_)
 
         if participant_type:
@@ -199,7 +200,7 @@ class OfficeSud(Browser):
             type_select.select_by_value('true')
         time.sleep(2)
 
-        proc_side = self.driver.find_element(By.ID, 'j_idt173:pp-side')
+        proc_side = self.driver.find_element(By.XPATH, '//select[contains(@id, "pp-side")]')
         proc_side_select = Select(proc_side)
 
         if participant_type:
@@ -208,45 +209,46 @@ class OfficeSud(Browser):
             proc_side_select.select_by_value('1')
         time.sleep(2)
 
-        goto_button = self.driver.find_element(By.ID, 'j_idt173:j_idt193')
+        goto_button = self.driver.find_elements(By.XPATH,
+                                               '//input[contains(@value, "Далее")]')[0]
         goto_button.click()
 
     def fill_requisites(self) -> None:
         bin_field = self.wait(self.driver, 10).until(ec.presence_of_element_located(
-            (By.ID, 'j_idt199:org-bin')
+            (By.XPATH, '//input[contains(@id, "org-bin")]')
         ))
         bin_field.send_keys(self.ORG_BIN)
         bin_field.click()
 
         search_button = self.wait(self.driver, 10).until(ec.presence_of_element_located(
-            (By.XPATH, '//*[@id="j_idt199:jurModalDialogPanel"]/div/div[1]/table/tbody/tr[4]/td[2]/div/span[1]')
+            (By.XPATH, '//span[contains(@onclick, "fillOrgData")]')
         ))
         search_button.click()
 
-        address_field = self.driver.find_element(By.ID, 'j_idt199:org-factAddress')
+        address_field = self.driver.find_element(By.XPATH, '//input[contains(@id, "org-factAddress")]')
         address_field.send_keys(self.ORG_ADDRESS)
 
-        requisites_field = self.driver.find_element(By.ID, 'j_idt199:org-bankDetails')
+        requisites_field = self.driver.find_element(By.XPATH, '//input[contains(@id, "org-bankDetails")]')
         requisites_field.send_keys('1')
         time.sleep(1)
 
-        save_button = self.driver.find_element(By.ID, 'j_idt199:j_idt261')
+        save_button = self.driver.find_element(By.XPATH, '//input[contains(@value, "Сохранить") and contains(@class, "btn btn-primary")]')
         save_button.click()
 
     def fill_fiz_info(self, iin: str) -> None:
         iin_field = self.wait(self.driver, 10).until(ec.presence_of_element_located(
-            (By.ID, 'j_idt266:person-iin')
+            (By.XPATH, '//input[contains(@id, "person-iin")]')
         ))
         iin_field.send_keys(iin)
 
         search_button = self.wait(self.driver, 10).until(ec.presence_of_element_located(
-            (By.XPATH, '//*[@id="j_idt266:fizModalDialogPanel"]/div/div[1]/table/tbody/tr[3]/td[2]/div/span[1]')
+            (By.XPATH, '//span[contains(@onclick, "fillPersonData")]')
         ))
         search_button.click()
         time.sleep(1)
 
         save_button = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
-            (By.ID, 'j_idt266:j_idt318')
+            (By.XPATH, '//input[contains(@value, "Сохранить") and contains(@class, "button button-primary")]')
         ))
         save_button.click()
 
@@ -255,9 +257,9 @@ class OfficeSud(Browser):
         add_participant_button.click()
         time.sleep(2)
 
-        self.wait(self.driver, 5).until(ec.presence_of_element_located(
-            (By.ID, 'j_idt173')
-        ))
+        # self.wait(self.driver, 5).until(ec.presence_of_element_located(
+        #     (By.XPATH, '//select[contains(@id, "pp-type")]')
+        # ))
 
         self.set_participant_type(iin)
         time.sleep(2)
@@ -292,28 +294,28 @@ class OfficeSud(Browser):
 
     def fill_payment(self, statement_sum: str, state_duty: str) -> None:
         kbk = self.wait(self.driver, 60).until(ec.presence_of_element_located(
-            (By.ID, 'j_idt37:j_idt39:j_idt42:selectKbk')
+            (By.XPATH, '//select[contains(@id, "selectKbk")]')
         ))
         kbk_select = Select(kbk)
 
         kbk_select.select_by_value(self.KBK)
         time.sleep(5)
 
-        sum_field = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:edit-totalSum')
+        sum_field = self.driver.find_element(By.XPATH, '//input[contains(@id, "edit-totalSum")]')
         sum_field.clear()
         sum_field.send_keys(statement_sum)
 
-        state_duty_field = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:edit-duty')
+        state_duty_field = self.driver.find_element(By.XPATH, '//input[contains(@id, "edit-duty")]')
         state_duty_field.clear()
         state_duty_field.send_keys(state_duty)
         time.sleep(5)
 
     def online_payment(self) -> None:
-        check_box = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:isonline-payment')
+        check_box = self.driver.find_element(By.XPATH, '//input[contains(@id, "isonline-payment")]')
         check_box.click()
 
         online_payment_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
-            (By.XPATH, '//*[@id="j_idt37:j_idt39:j_idt42:personTableRows:0:paymentButton"]/a')
+            (By.CSS_SELECTOR, '[onclick="fillHideFields(); doPay1(); return false;"]')
         ))
         online_payment_button.click()
 
@@ -351,11 +353,11 @@ class OfficeSud(Browser):
         for _ in range(15):
             base_req += '1'
 
-        text_area = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:edit-plaint-description')
+        text_area = self.driver.find_element(By.XPATH, '//textarea[contains(@id, "edit-plaint-description")]')
         text_area.send_keys(base_req)
         time.sleep(2)
 
-        text_area = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:edit-plaint-additional')
+        text_area = self.driver.find_element(By.XPATH, '//textarea[contains(@id, "edit-plaint-additional")]')
         text_area.send_keys(base_req)
         time.sleep(2)
 
@@ -368,8 +370,8 @@ class OfficeSud(Browser):
         self.add_participant(iin)
         time.sleep(5)
 
-        next_page_button = self.driver.find_element(By.XPATH,
-                                                    '//*[@id="j_idt39:j_idt41:j_idt44:button-panel"]/a[2]')
+        next_page_button = self.driver.find_element(By.CSS_SELECTOR,
+                                                    '[onclick="fillHideFields(); goNext(); return false;"]')
         next_page_button.click()
         time.sleep(5)
 
@@ -382,7 +384,7 @@ class OfficeSud(Browser):
         time.sleep(3)
         self.driver.back()
 
-        check_box = self.driver.find_element(By.ID, 'j_idt37:j_idt39:j_idt42:personTableRows:0:isonline-payment')
+        check_box = self.driver.find_element(By.XPATH, '//input[contains(@id, "isonline-payment")]')
         check_box.click()
 
         time.sleep(5)
@@ -427,8 +429,8 @@ class OfficeSud(Browser):
 
         self.fill_statement_requirements()
 
-        next_page_button = self.driver.find_element(By.XPATH,
-                                                    '//*[@id="j_idt37:j_idt39:j_idt42"]/div[2]/div[1]/div/a[2]')
+        next_page_button = self.driver.find_element(By.CSS_SELECTOR,
+                                                    '[onclick="goToSign(); return false;"]')
         next_page_button.click()
         time.sleep(5)
 
@@ -444,7 +446,7 @@ class OfficeSud(Browser):
 
     def result_page(self) -> None:
         safe_talon_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
-            (By.ID, 'j_idt37:j_idt39:j_idt42:j_idt46')
+            (By.XPATH, '//input[contains(@value, "Скачать талон об отправке")]')
         ))
 
         safe_talon_button.click()

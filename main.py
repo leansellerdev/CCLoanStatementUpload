@@ -1,12 +1,16 @@
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
 from core.browser.office_sud import OfficeSud
-from core.scanning import get_statement_info, scan_folders
+from core import scanning
 
 from loguru import logger
 
-from settings import CASE_DIR
+from core.telegram import send_logs
+from settings import CASE_DIR, LOG_FILE_PATH
+
+
+logger.add(LOG_FILE_PATH)
 
 
 class App:
@@ -17,12 +21,16 @@ class App:
 
     @staticmethod
     def get_data_to_upload() -> tuple[str, dict]:
-        iin = scan_folders()
+        iin = scanning.scan_folders()
 
         if iin is not None:
-            statement_info = get_statement_info(CASE_DIR / iin)
-
-            return iin, statement_info
+            try:
+                statement_info = scanning.get_statement_info(CASE_DIR / iin)
+            except FileNotFoundError as no_statement_info:
+                logger.error(str(no_statement_info), exc_info=True)
+                send_logs(message=f'Нет информации об иске для ИИН: {iin}')
+            else:
+                return iin, statement_info
 
     def run(self) -> None:
         try:
@@ -34,11 +42,13 @@ class App:
         try:
             self.parser.process(statement_info)
         except Exception as process_error:
-            logger.error(str(process_error), exc_info=True)
+            logger.error(str(process_error), exc_info=True
+            )
+            send_logs(message=str(process_error))
 
 
 trigger = IntervalTrigger(minutes=1)
-scheduler = BackgroundScheduler(logger=logger)
+scheduler = BlockingScheduler(logger=logger)
 
 
 if __name__ == '__main__':
@@ -51,4 +61,4 @@ if __name__ == '__main__':
         logger.error('Interrupted')
     except Exception as unexpected_error:
         logger.error(str(unexpected_error), exc_info=True)
-        # send_logs(unexpected_error, log_file=LOG_FILE_PATH)
+        send_logs(message=str(unexpected_error))

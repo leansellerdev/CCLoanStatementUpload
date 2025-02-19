@@ -1,6 +1,8 @@
 from pywinauto import Application, ElementNotFoundError, WindowSpecification, keyboard, WindowNotFoundError
 from pywinauto.application import ProcessNotFoundError
 
+from loguru import logger
+
 from core.utils import Logger, Config
 
 from settings import nca_layer_path, open_jdk_path, KEY_PATH
@@ -8,7 +10,7 @@ from settings import nca_layer_path, open_jdk_path, KEY_PATH
 
 class Desktop:
     def __init__(self) -> None:
-        self.logger = Logger(self.__class__.__name__, to_file=False).set_logger()
+        self.logger = logger
         self.app = Application()
 
     def _check_if_started(self, path) -> bool:

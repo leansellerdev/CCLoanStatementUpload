@@ -28,6 +28,3 @@ def scan_folders() -> str:
             continue
 
         return folder
-
-
-scan_folders()

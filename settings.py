@@ -17,3 +17,5 @@ RESULTS_PATH = PATH / 'results'
 
 nca_layer_path = r"C:\Users\96514502\AppData\Roaming\NCALayer\NCALayer.exe"
 open_jdk_path = r"C:\Users\96514502\AppData\Roaming\NCALayer\jre\bin\javaw.exe"
+
+PROJECT_NAME = 'Загрузка иска'

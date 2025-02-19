@@ -5,21 +5,21 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 
-from core.utils import Logger
+from loguru import logger
 
 from settings import DEBUG, RESULTS_PATH
 
 
 class Browser:
     def __init__(self) -> None:
-        self.logger = Logger(self.__class__.__name__).set_logger()
+        self.logger = logger
 
         self.options = self.__options
         self.chrome_version = self.__get_chrome_version
 
     @property
     def __options(self) -> uc.ChromeOptions:
-        self.logger.info("Setting options")
+        self.logger.debug("Setting options")
         options = uc.ChromeOptions()
 
         user_agent = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ('
@@ -84,7 +84,7 @@ class Browser:
             except Exception as error:
                 raise Exception(f"Ошибка при проверке версии браузера: {error}")
 
-        self.logger.info(f"Chrome version: {version}")
+        self.logger.debug(f"Chrome version: {version}")
         return int(version.split(".")[0])
 
     @staticmethod
