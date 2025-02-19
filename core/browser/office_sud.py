@@ -252,6 +252,9 @@ class OfficeSud(Browser):
 
     def add_participant(self, iin=None) -> None:
         add_participant_button = self.driver.find_element(By.CSS_SELECTOR, '[onclick="renderAddPersonModalDialog()"]')
+        self.wait(self.driver, 20).until(ec.visibility_of_element_located(
+            (By.CSS_SELECTOR, '[onclick="renderAddPersonModalDialog()"]')
+        ))
         add_participant_button.click()
         time.sleep(2)
 
@@ -337,6 +340,9 @@ class OfficeSud(Browser):
 
     def upload_file(self, input_path: str, file_path: str) -> None:
         file_input = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
+            (By.CSS_SELECTOR, input_path)
+        ))
+        self.wait(self.driver, 120).until(ec.visibility_of_element_located(
             (By.CSS_SELECTOR, input_path)
         ))
         file_input.click()
