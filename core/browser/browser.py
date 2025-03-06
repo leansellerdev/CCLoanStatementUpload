@@ -34,8 +34,9 @@ class Browser:
 
         options.add_experimental_option("prefs", prefs)
 
-        user_data_dir = r'C:\Users\96514502\AppData\Local\Google\Chrome\Profile 1'
-        options.add_argument(f"--user-data-dir={user_data_dir}")
+        # user_data_dir = r'C:\Users\96514502\AppData\Local\Google\Chrome\MySeleniumProfile'
+        # options.add_argument("--profile-directory=MySeleniumProfile")
+        # options.add_argument(f"--user-data-dir={user_data_dir}")
 
         options.add_argument("--width=device-width")
         options.add_argument("--initial-scale=1")

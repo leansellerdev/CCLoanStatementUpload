@@ -1,10 +1,12 @@
 import os
 import time
 
+import loguru
 import undetected_chromedriver as uc
 from pywinauto import keyboard
 from selenium.webdriver.common.by import By
-from selenium.common import NoSuchElementException, NoSuchAttributeException
+from selenium.common import NoSuchElementException, NoSuchAttributeException, ElementClickInterceptedException, \
+    ElementNotInteractableException
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select
 
@@ -231,7 +233,17 @@ class OfficeSud(Browser):
         time.sleep(1)
 
         save_button = self.driver.find_element(By.XPATH, '//input[contains(@value, "Сохранить") and contains(@class, "btn btn-primary")]')
-        save_button.click()
+
+        clicked = False
+
+        while not clicked:
+            try:
+                save_button.click()
+            except ElementNotInteractableException:
+                pass
+            else:
+                clicked = True
+
 
     def fill_fiz_info(self, iin: str) -> None:
         iin_field = self.wait(self.driver, 10).until(ec.presence_of_element_located(
@@ -248,7 +260,15 @@ class OfficeSud(Browser):
         save_button = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
             (By.XPATH, '//input[contains(@value, "Сохранить") and contains(@class, "button button-primary")]')
         ))
-        save_button.click()
+        clicked = False
+
+        while not clicked:
+            try:
+                save_button.click()
+            except ElementClickInterceptedException:
+                pass
+            else:
+                clicked = True
 
     def add_participant(self, iin=None) -> None:
         add_participant_button = self.driver.find_element(By.CSS_SELECTOR, '[onclick="renderAddPersonModalDialog()"]')
@@ -257,10 +277,6 @@ class OfficeSud(Browser):
         ))
         add_participant_button.click()
         time.sleep(2)
-
-        # self.wait(self.driver, 5).until(ec.presence_of_element_located(
-        #     (By.XPATH, '//select[contains(@id, "pp-type")]')
-        # ))
 
         self.set_participant_type(iin)
         time.sleep(2)
@@ -345,7 +361,17 @@ class OfficeSud(Browser):
         self.wait(self.driver, 120).until(ec.visibility_of_element_located(
             (By.CSS_SELECTOR, input_path)
         ))
-        file_input.click()
+
+        clicked = False
+
+        while not clicked:
+            try:
+                file_input.click()
+            except ElementClickInterceptedException:
+                pass
+            else:
+                clicked = True
+
         time.sleep(2)
 
         keyboard.send_keys(str(file_path), pause=0)
@@ -452,7 +478,7 @@ class OfficeSud(Browser):
         time.sleep(5)
 
     def result_page(self) -> None:
-        safe_talon_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
+        safe_talon_button = self.wait(self.driver, 120).until(ec.presence_of_element_located(
             (By.XPATH, '//input[contains(@value, "Скачать талон об отправке")]')
         ))
 

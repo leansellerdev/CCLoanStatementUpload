@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import shutil
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -12,14 +13,17 @@ from core.telegram import send_logs
 from settings import CASE_DIR, LOG_FILE_PATH
 
 
-logger.add(LOG_FILE_PATH)
+logger.add(LOG_FILE_PATH, encoding='utf-8')
 
 
 class App:
+    def __init__(self) -> None:
+        self.parser = None
 
-    @property
-    def parser(self) -> OfficeSud:
-        return OfficeSud(logger=logger)
+    @staticmethod
+    def _init_parser() -> OfficeSud:
+        parser = OfficeSud(logger=logger)
+        return parser
 
     @staticmethod
     def get_data_to_upload() -> tuple[str, dict]:
@@ -35,18 +39,26 @@ class App:
                 return iin, statement_info
 
     def run(self) -> None:
+        self.parser = self._init_parser()
         try:
             iin, statement_info = self.get_data_to_upload()
         except TypeError:
             logger.warning(f"Нет готовых исков для загрузки")
             return
 
+        logger.info(f'ИИН: {iin}')
+
+        if statement_info.get('final_summa') == 0:
+            logger.info(f'Сумма иска равна {statement_info.get("final_summa")}. Удаляем дело!')
+            shutil.rmtree(CASE_DIR / iin)
+            return
+
         try:
             self.parser.process(statement_info)
         except Exception as process_error:
+            self.parser.driver.quit()
             logger.error(str(process_error), exc_info=True)
             send_logs(message=str(process_error))
-            self.parser.driver.close()
 
 
 trigger = IntervalTrigger(minutes=1, start_date=datetime.now() + timedelta(seconds=5))
