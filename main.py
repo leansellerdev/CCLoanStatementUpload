@@ -7,6 +7,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from core.browser.office_sud import OfficeSud
 from core import scanning
 
+import traceback
 from loguru import logger
 
 from core.telegram import send_logs
@@ -39,12 +40,13 @@ class App:
                 return iin, statement_info
 
     def run(self) -> None:
-        self.parser = self._init_parser()
         try:
             iin, statement_info = self.get_data_to_upload()
         except TypeError:
             logger.warning(f"Нет готовых исков для загрузки")
             return
+        else:
+            self.parser = self._init_parser()
 
         logger.info(f'ИИН: {iin}')
 
@@ -55,10 +57,10 @@ class App:
 
         try:
             self.parser.process(statement_info)
-        except Exception as process_error:
+        except Exception:
             self.parser.driver.quit()
-            logger.error(str(process_error), exc_info=True)
-            send_logs(message=str(process_error))
+            send_logs(message=traceback.format_exc())
+            logger.error(traceback.format_exc())
 
 
 trigger = IntervalTrigger(minutes=1, start_date=datetime.now() + timedelta(seconds=5))
@@ -74,5 +76,5 @@ if __name__ == '__main__':
     except (KeyboardInterrupt, SystemExit):
         logger.error('Interrupted')
     except Exception as unexpected_error:
-        logger.error(str(unexpected_error), exc_info=True)
-        send_logs(message=str(unexpected_error))
+        send_logs(message=traceback.format_exc())
+        logger.error(unexpected_error)

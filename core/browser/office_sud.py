@@ -1,7 +1,6 @@
 import os
 import time
 
-import loguru
 import undetected_chromedriver as uc
 from pywinauto import keyboard
 from selenium.webdriver.common.by import By
@@ -418,10 +417,26 @@ class OfficeSud(Browser):
         # check_box = self.wait(self.driver, 60).until(ec.element_to_be_clickable(
         #     (By.XPATH, '//input[contains(@id, "ad")]')
         # ))
-        check_box.click()
+        clicked = False
+
+        while not clicked:
+            try:
+                check_box.click()
+            except ElementClickInterceptedException:
+                pass
+            else:
+                clicked = True
 
         time.sleep(5)
-        check_box.click()
+        clicked = False
+
+        while not clicked:
+            try:
+                check_box.click()
+            except ElementClickInterceptedException:
+                pass
+            else:
+                clicked = True
 
         check_status_button = self.wait(self.driver, 60).until(ec.presence_of_element_located(
             (By.CSS_SELECTOR, '[onclick="doCheckPayments(); return false;"]')
@@ -431,7 +446,15 @@ class OfficeSud(Browser):
 
         next_page_button = self.driver.find_element(By.CSS_SELECTOR,
                                                     '[onclick="fillHideFields(); goToDocuments(); return false;"]')
-        next_page_button.click()
+        clicked = False
+        while not clicked:
+            try:
+                next_page_button.click()
+            except ElementClickInterceptedException:
+                pass
+            else:
+                clicked = True
+
         time.sleep(5)
 
         return payment_code
@@ -440,14 +463,14 @@ class OfficeSud(Browser):
         case_folder = CASE_DIR / iin
 
         statement_path = case_folder / f'Исковое_Заявление_{iin}.docx'
-        doc_6_path = case_folder / 'doc_6.pdf'
-        licence_path = case_folder / 'licence.pdf'
+        doc_6_path = case_folder / 'Приказ_о_назначении_директора.pdf'
+        licence_path = case_folder / 'Лицензия.pdf'
         hod_path = case_folder / 'Ходатайство_об_отмене_упр_производства.docx'
+        yur_dogovor_path = case_folder / 'Договор_на_оказание_юридических_услуг.pdf'
 
-        dogovor_path = [file for file in case_folder.iterdir() if 'dogovor' in str(file)][0]
-        dolg_path = [file for file in case_folder.iterdir() if 'dolg' in str(file)][0]
-        uved_path = [file for file in case_folder.iterdir() if 'uvedomlenie' in str(file)][0]
-        yur_dogovor_path = [file for file in case_folder.iterdir() if 'Договор' in str(file)][0]
+        dogovor_path = [file for file in case_folder.iterdir() if 'Договор_о_предоставлении_микрокредита' in str(file)][0]
+        dolg_path = [file for file in case_folder.iterdir() if 'Рассчет_задолженности' in str(file)][0]
+        uved_path = [file for file in case_folder.iterdir() if 'Досудебная_претензия' in str(file)][0]
 
         docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path, yur_dogovor_path]
 
