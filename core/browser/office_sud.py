@@ -1,4 +1,5 @@
 import os
+import shutil
 import time
 
 import undetected_chromedriver as uc
@@ -14,7 +15,7 @@ from core.desktop import NCALayer
 
 from core.telegram import send_payment_info
 
-from settings import CASE_DIR, RESULTS_PATH
+from settings import CASE_DIR, RESULTS_PATH, RESULTS_DIR
 
 
 class OfficeSud(Browser):
@@ -517,6 +518,10 @@ class OfficeSud(Browser):
 
         os.rename(latest_file, CASE_DIR / iin / 'уведомление_об_отправке.pdf')
 
+    @staticmethod
+    def move_result_when_done(iin: str) -> None:
+        shutil.move(CASE_DIR / iin, RESULTS_DIR)
+
     def process(self, statement_info: dict) -> None:
         self.logger.info("Логинимся на сайте")
         self.login_via_key()
@@ -546,3 +551,4 @@ class OfficeSud(Browser):
         notification_path = CASE_DIR / statement_info.get('iin') / 'уведомление_об_отправке.pdf'
 
         send_payment_info(statement_info, notification_path)
+        self.move_result_when_done(statement_info.get('iin'))
