@@ -158,7 +158,9 @@ class OfficeSud(Browser):
         send_button.click()
 
     def __select_category_group(self) -> None:
-        category_group = self.driver.find_element(By.XPATH, '//select[contains(@id, "edit-categoryGroup")]')
+        category_group = self.wait(self.driver, 15).until(ec.presence_of_element_located(
+            (By.XPATH, '//select[contains(@id, "edit-categoryGroup")]')
+        ))
 
         category_group_select = Select(category_group)
         category_group_select.select_by_value(self.CAT_GROUP)
@@ -239,7 +241,7 @@ class OfficeSud(Browser):
         while not clicked:
             try:
                 save_button.click()
-            except ElementNotInteractableException:
+            except (ElementNotInteractableException, ElementClickInterceptedException):
                 pass
             else:
                 clicked = True
@@ -460,20 +462,21 @@ class OfficeSud(Browser):
 
         return payment_code
 
-    def upload_files_page(self, iin: str) -> None:
-        case_folder = CASE_DIR / iin
+    def upload_files_page(self, iin: str, paybox: str) -> None:
+        case_folder = CASE_DIR / f'{iin}_{paybox}'
 
         statement_path = case_folder / f'Исковое_Заявление_{iin}.docx'
         doc_6_path = case_folder / 'Приказ_о_назначении_директора.pdf'
         licence_path = case_folder / 'Лицензия.pdf'
         hod_path = case_folder / 'Ходатайство_об_отмене_упр_производства.docx'
         yur_dogovor_path = case_folder / 'Договор_на_оказание_юридических_услуг.pdf'
+        platezh_path = case_folder / f'{iin}_ПлатежПор.pdf'
 
         dogovor_path = [file for file in case_folder.iterdir() if 'Договор_о_предоставлении_микрокредита' in str(file)][0]
         dolg_path = [file for file in case_folder.iterdir() if 'Рассчет_задолженности' in str(file)][0]
         uved_path = [file for file in case_folder.iterdir() if 'Досудебная_претензия' in str(file)][0]
 
-        docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path, yur_dogovor_path]
+        docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path, yur_dogovor_path, platezh_path]
 
         self.upload_file('[value="Загрузить иск"]', statement_path)
 
@@ -510,17 +513,17 @@ class OfficeSud(Browser):
         time.sleep(5)
 
     @staticmethod
-    def move_result_notification(iin: str) -> None:
+    def move_result_notification(iin: str, paybox: str) -> None:
         files = os.listdir(RESULTS_PATH)
         paths = [os.path.join(RESULTS_PATH, filename) for filename in files]
 
         latest_file = max(paths, key=os.path.getctime)
 
-        os.rename(latest_file, CASE_DIR / iin / 'уведомление_об_отправке.pdf')
+        shutil.move(latest_file, CASE_DIR / f'{iin}_{paybox}' / 'уведомление_об_отправке.pdf')
 
     @staticmethod
-    def move_result_when_done(iin: str) -> None:
-        shutil.move(CASE_DIR / iin, RESULTS_DIR)
+    def move_result_when_done(iin: str, paybox: str) -> None:
+        shutil.move(CASE_DIR / f'{iin}_{paybox}', RESULTS_DIR)
 
     def process(self, statement_info: dict) -> None:
         self.logger.info("Логинимся на сайте")
@@ -537,7 +540,7 @@ class OfficeSud(Browser):
         statement_info['payment_code'] = payment_code
 
         self.logger.info("Загружаем файлы")
-        self.upload_files_page(statement_info.get('iin'))
+        self.upload_files_page(statement_info.get('iin'), statement_info.get('paybox'))
 
         self.logger.info("Подписываем подачу иска")
         self.sign_statement_page()
@@ -545,10 +548,10 @@ class OfficeSud(Browser):
         self.logger.info("Скачиваем итоговый файл")
         self.result_page()
 
-        self.move_result_notification(statement_info.get('iin'))
+        self.move_result_notification(statement_info.get('iin'), statement_info.get('paybox'))
         self.driver.close()
 
-        notification_path = CASE_DIR / statement_info.get('iin') / 'уведомление_об_отправке.pdf'
+        notification_path = CASE_DIR / f"{statement_info.get('iin')}_{statement_info.get('paybox')}" / 'уведомление_об_отправке.pdf'
 
         send_payment_info(statement_info, notification_path)
-        self.move_result_when_done(statement_info.get('iin'))
+        self.move_result_when_done(statement_info.get('iin'), statement_info.get('paybox'))

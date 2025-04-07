@@ -27,4 +27,5 @@ def scan_folders() -> str:
         if 'уведомление_об_отправке.pdf' in str(files):
             continue
 
-        return folder
+        if '_ПлатежПор.pdf' in str(files):
+            return folder

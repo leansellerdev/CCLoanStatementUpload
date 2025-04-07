@@ -28,31 +28,31 @@ class App:
 
     @staticmethod
     def get_data_to_upload() -> tuple[str, dict]:
-        iin = scanning.scan_folders()
+        folder_name = scanning.scan_folders()
 
-        if iin is not None:
+        if folder_name is not None:
             try:
-                statement_info = scanning.get_statement_info(CASE_DIR / iin)
+                statement_info = scanning.get_statement_info(CASE_DIR / folder_name)
             except FileNotFoundError as no_statement_info:
                 logger.error(str(no_statement_info), exc_info=True)
-                send_logs(message=f'Нет информации об иске для ИИН: {iin}')
+                send_logs(message=f'Нет информации об иске для ИИН: {folder_name}')
             else:
-                return iin, statement_info
+                return folder_name, statement_info
 
     def run(self) -> None:
         try:
-            iin, statement_info = self.get_data_to_upload()
+            folder_name, statement_info = self.get_data_to_upload()
         except TypeError:
             logger.warning(f"Нет готовых исков для загрузки")
             return
         else:
             self.parser = self._init_parser()
 
-        logger.info(f'ИИН: {iin}')
+        logger.info(f'ИИН: {folder_name}')
 
         if statement_info.get('final_summa') == 0:
             logger.info(f'Сумма иска равна {statement_info.get("final_summa")}. Удаляем дело!')
-            shutil.rmtree(CASE_DIR / iin)
+            shutil.rmtree(CASE_DIR / folder_name)
             return
 
         try:
