@@ -50,6 +50,7 @@ class OfficeSud(Browser):
     def _get_url(self) -> None:
         self.logger.info("Заходим на сайт")
         self.driver.maximize_window()
+        self.driver.set_page_load_timeout(120)
         self.driver.get(self._SUD_URL)
 
     def _change_language(self, lang: str = 'rus') -> None:

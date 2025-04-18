@@ -1,8 +1,10 @@
+import os
 from datetime import datetime, timedelta
 import shutil
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from selenium.common import TimeoutException
 
 from core.browser.office_sud import OfficeSud
 from core import scanning
@@ -10,6 +12,7 @@ from core import scanning
 import traceback
 from loguru import logger
 
+from core.scanning import get_total_todays_cases
 from core.telegram import send_logs
 from settings import CASE_DIR, LOG_FILE_PATH
 
@@ -57,21 +60,33 @@ class App:
 
         try:
             self.parser.process(statement_info)
+        except TimeoutException:
+            self.parser.driver.quit()
         except Exception:
             self.parser.driver.quit()
             send_logs(message=traceback.format_exc())
             logger.error(traceback.format_exc())
 
+    def start(self) -> None:
+        today_cases = get_total_todays_cases()
+        logger.info(f'Количество дел за сегодня: {today_cases}')
+
+        if today_cases == 30:
+            os.remove(LOG_FILE_PATH)
+            return
+
+        self.run()
+
 
 trigger = IntervalTrigger(minutes=1, start_date=datetime.now() + timedelta(seconds=5))
-scheduler = BlockingScheduler(logger=logger)
+scheduler = BlockingScheduler()
 
 
 if __name__ == '__main__':
     app = App()
 
     try:
-        scheduler.add_job(app.run, trigger)
+        scheduler.add_job(app.start, trigger)
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
         logger.error('Interrupted')

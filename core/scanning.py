@@ -1,9 +1,10 @@
 import os
 import json
+from datetime import datetime
 
 from pathlib import Path
 
-from settings import CASE_DIR
+from settings import CASE_DIR, RESULTS_DIR
 
 
 def get_statement_info(folder_name: Path) -> dict:
@@ -29,3 +30,16 @@ def scan_folders() -> str:
 
         if '_ПлатежПор.pdf' in str(files):
             return folder
+
+
+def get_total_todays_cases() -> int:
+    folders = os.listdir(RESULTS_DIR)
+
+    paths = [os.path.join(RESULTS_DIR, basename) for basename in folders]
+    all_cases_times = [
+        datetime.fromtimestamp(os.path.getmtime(file)).strftime('%d:%m:%Y') for file in paths
+    ]
+
+    todays_cases_times = [file for file in all_cases_times if datetime.today().strftime('%d:%m:%Y') == file]
+
+    return len(todays_cases_times)
