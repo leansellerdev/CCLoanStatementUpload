@@ -41,13 +41,19 @@ class NCALayer(Desktop):
         self.config = Config()
 
     def start(self) -> None:
-        if not self._check_if_started(nca_layer_path):
+        if not self._check_if_started(nca_layer_path) or not self._check_if_started(open_jdk_path):
             self.app.start(nca_layer_path)
             self.logger.info("NCALayer запущен.")
 
             return
 
         self.logger.warning("NCALayer уже запущен!")
+
+    def close(self) -> None:
+        if not self._check_if_started(open_jdk_path):
+            return
+
+        self.app.kill()
 
     def choose_key(self):
         window = self.set_window_focus(open_jdk_path, 'Открыть файл')
@@ -71,5 +77,5 @@ class NCALayer(Desktop):
 
 if __name__ == '__main__':
     nca = NCALayer()
-    nca.choose_key()
+    nca.close()
     # time.sleep(600)

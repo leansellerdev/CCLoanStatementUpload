@@ -556,3 +556,5 @@ class OfficeSud(Browser):
 
         send_payment_info(statement_info, notification_path)
         self.move_result_when_done(statement_info.get('iin'), statement_info.get('paybox'))
+
+        self.nca_layer.close()

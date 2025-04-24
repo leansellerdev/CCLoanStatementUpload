@@ -71,8 +71,7 @@ class App:
         today_cases = get_total_todays_cases()
         logger.info(f'Количество дел за сегодня: {today_cases}')
 
-        if today_cases == 30:
-            os.remove(LOG_FILE_PATH)
+        if today_cases >= 40:
             return
 
         self.run()
