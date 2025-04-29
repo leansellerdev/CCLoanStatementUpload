@@ -40,6 +40,49 @@ def get_total_todays_cases() -> int:
         datetime.fromtimestamp(os.path.getmtime(file)).strftime('%d:%m:%Y') for file in paths
     ]
 
-    todays_cases_times = [file for file in all_cases_times if datetime.today().strftime('%d:%m:%Y') == file]
+    todays_cases_times_with_payment = [
+        time for time in all_cases_times if datetime.today().strftime('%d:%m:%Y') == time
+    ]
 
-    return len(todays_cases_times)
+    return len(todays_cases_times_with_payment)
+
+
+# def get_total_todays_cases_with_payment() -> int:
+#     folders = os.listdir(RESULTS_DIR)
+#     paths = []
+#
+#     for folder in folders:
+#         for filename in os.listdir(os.path.join(RESULTS_DIR, folder)):
+#             if filename.endswith('_ПлатежПор.pdf'):
+#                 paths.append(os.path.join(RESULTS_DIR, folder))
+#
+#     all_cases_times = [
+#         datetime.fromtimestamp(os.path.getmtime(file)).strftime('%d:%m:%Y') for file in paths
+#     ]
+#
+#     todays_cases_times_with_payment = [
+#         time for time in all_cases_times if datetime.today().strftime('%d:%m:%Y') == time
+#     ]
+#
+#     return len(todays_cases_times_with_payment)
+#
+#
+# def get_total_todays_cases_without_payment() -> int:
+#     folders = os.listdir(RESULTS_DIR)
+#     paths = []
+#
+#     for folder in folders:
+#         for filename in os.listdir(os.path.join(RESULTS_DIR, folder)):
+#             if filename.endswith('_ПлатежПор.pdf'):
+#                 break
+#             paths.append(os.path.join(RESULTS_DIR, folder))
+#
+#     all_cases_times = [
+#         datetime.fromtimestamp(os.path.getmtime(file)).strftime('%d:%m:%Y') for file in paths
+#     ]
+#
+#     todays_cases_times_without_payment = [
+#         time for time in all_cases_times if datetime.today().strftime('%d:%m:%Y') == time
+#     ]
+#
+#     return len(todays_cases_times_without_payment)

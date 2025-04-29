@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta
 import shutil
 
@@ -12,7 +11,6 @@ from core import scanning
 import traceback
 from loguru import logger
 
-from core.scanning import get_total_todays_cases
 from core.telegram import send_logs
 from settings import CASE_DIR, LOG_FILE_PATH
 
@@ -68,7 +66,7 @@ class App:
             logger.error(traceback.format_exc())
 
     def start(self) -> None:
-        today_cases = get_total_todays_cases()
+        today_cases = scanning.get_total_todays_cases()
         logger.info(f'Количество дел за сегодня: {today_cases}')
 
         if today_cases >= 40:

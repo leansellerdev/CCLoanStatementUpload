@@ -3,7 +3,7 @@ from pywinauto.application import ProcessNotFoundError
 
 from loguru import logger
 
-from core.utils import Logger, Config
+from core.utils import Config
 
 from settings import nca_layer_path, open_jdk_path, KEY_PATH
 
@@ -73,9 +73,3 @@ class NCALayer(Desktop):
 
         keyboard.send_keys(self.config['password'], pause=0)
         keyboard.send_keys('{ENTER 2}', pause=1)
-
-
-if __name__ == '__main__':
-    nca = NCALayer()
-    nca.close()
-    # time.sleep(600)
