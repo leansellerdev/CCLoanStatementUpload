@@ -471,13 +471,16 @@ class OfficeSud(Browser):
         licence_path = case_folder / 'Лицензия.pdf'
         hod_path = case_folder / 'Ходатайство_об_отмене_упр_производства.docx'
         yur_dogovor_path = case_folder / 'Договор_на_оказание_юридических_услуг.pdf'
-        platezh_path = case_folder / f'{iin}_ПлатежПор.pdf'
+        # platezh_path = case_folder / f'{iin}_ПлатежПор.pdf'
 
         dogovor_path = [file for file in case_folder.iterdir() if 'Договор_о_предоставлении_микрокредита' in str(file)][0]
         dolg_path = [file for file in case_folder.iterdir() if 'Рассчет_задолженности' in str(file)][0]
         uved_path = [file for file in case_folder.iterdir() if 'Досудебная_претензия' in str(file)][0]
 
-        docs = [doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path, yur_dogovor_path, platezh_path]
+        docs = [
+            doc_6_path, licence_path, hod_path, dogovor_path, dolg_path, uved_path, yur_dogovor_path,
+            # platezh_path
+            ]
 
         self.upload_file('[value="Загрузить иск"]', statement_path)
 
