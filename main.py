@@ -1,5 +1,8 @@
+import random
 from datetime import datetime, timedelta
 import shutil
+
+from pywinauto import mouse
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -66,6 +69,11 @@ class App:
             logger.error(traceback.format_exc())
 
     def start(self) -> None:
+        mouse.scroll(
+            coords=(random.randint(0, 1000), 500),
+            wheel_dist=5
+        )
+
         today_cases = scanning.get_total_todays_cases()
         logger.info(f'Количество дел за сегодня: {today_cases}')
 
