@@ -7,8 +7,8 @@ TG_BOT_TOKEN = '7471120443:AAG-JD6F77s_ENR0TztsBpuDhYsPqNInDMU'
 
 PATH = Path(__file__).resolve().parent
 
-CASE_DIR = Path(r"N:\Delo\Неподанные")
-RESULTS_DIR = Path(f'N:\Delo\Поданные')
+CASE_DIR = Path(r"N:\Delo\Без платежки")
+RESULTS_DIR = Path(r"N:\Delo\Поданные")
 
 CONFIG_PATH = PATH / 'config.yaml'
 ENV_PATH = PATH / 'secrets.env'

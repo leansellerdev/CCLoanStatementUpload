@@ -28,8 +28,9 @@ def scan_folders() -> str:
         if 'уведомление_об_отправке.pdf' in str(files):
             continue
 
-        if '_ПлатежПор.pdf' in str(files):
-            return folder
+        # if '_ПлатежПор.pdf' in str(files):
+        #     return folder
+        return folder
 
 
 def get_total_todays_cases() -> int:
