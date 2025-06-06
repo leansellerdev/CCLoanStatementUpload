@@ -10,6 +10,8 @@ PATH = Path(__file__).resolve().parent
 CASE_DIR = Path(r"N:\Delo\Безплатежки")
 RESULTS_DIR = Path(r"N:\Delo\Поданные")
 
+DB_PATH = Path(r"C:\Users\96514502\PycharmProjects\CCLoanAutomate\db.sqlite3")
+
 CONFIG_PATH = PATH / 'config.yaml'
 ENV_PATH = PATH / 'secrets.env'
 LOG_FILE_PATH = PATH / 'app.log'

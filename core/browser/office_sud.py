@@ -11,6 +11,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select
 
 from core.browser import Browser
+from core.database import SQLiteDatabse
 from core.desktop import NCALayer
 
 from core.telegram import send_payment_info
@@ -27,6 +28,7 @@ class OfficeSud(Browser):
     STATEMENT_CHARACTER = '1'
     DISCTRICT = '3'
     COURT = '20'
+    COURT_NAME = 'Районный суд №2 Ауэзовского района города Алматы (Гражданские дела)'
 
     ORG_BIN = '151040016751'
     ORG_ADDRESS = 'Муратбаева 180 офис 404'
@@ -43,6 +45,7 @@ class OfficeSud(Browser):
 
         self.nca_layer = NCALayer()
         self.driver = uc.Chrome(version_main=self.chrome_version, options=self.options)
+        self.database = SQLiteDatabse()
 
     def scroll_down(self) -> None:
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
@@ -561,3 +564,10 @@ class OfficeSud(Browser):
         self.move_result_when_done(statement_info.get('iin'), statement_info.get('paybox'))
 
         self.nca_layer.close()
+        self.database.add_case(
+            iin=statement_info.get('iin'),
+            credit_id=statement_info.get('credit_id'),
+            payment_sum=statement_info.get('state_duty'),
+            payment_code=payment_code,
+            court_name=self.COURT_NAME
+        )
