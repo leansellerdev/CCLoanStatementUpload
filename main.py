@@ -69,6 +69,10 @@ class App:
             logger.error(traceback.format_exc())
 
     def start(self) -> None:
+        today = datetime.now().date()
+        if today.weekday() >= 5:
+            return
+
         mouse.scroll(
             coords=(random.randint(0, 1000), 500),
             wheel_dist=5
