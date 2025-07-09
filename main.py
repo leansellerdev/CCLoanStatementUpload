@@ -73,10 +73,10 @@ class App:
         if today.weekday() >= 5:
             return
 
-        mouse.scroll(
-            coords=(random.randint(0, 1000), 500),
-            wheel_dist=5
-        )
+        # mouse.scroll(
+        #     coords=(random.randint(0, 1000), 500),
+        #     wheel_dist=5
+        # )
 
         today_cases = scanning.get_total_todays_cases()
         logger.info(f'Количество дел за сегодня: {today_cases}')

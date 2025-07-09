@@ -128,10 +128,10 @@ class OfficeSud(Browser):
         instance_type_select.select_by_value(self.INSTANCE)
 
     def __select_doc_type(self) -> None:
-        doct_type = self.driver.find_element(By.XPATH, '//select[contains(@id, "request")]')
-        doct_type_select = Select(doct_type)
+        doc_type = self.driver.find_element(By.XPATH, '//select[contains(@id, "request")]')
+        doc_type_select = Select(doc_type)
 
-        doct_type_select.select_by_value(self.DOC_TYPE)
+        doc_type_select.select_by_value(self.DOC_TYPE)
 
     def __select_options(self) -> None:
         # Выбираем тип производства
@@ -158,7 +158,7 @@ class OfficeSud(Browser):
         time.sleep(3)
 
         # Подтверждаем настройки
-        send_button = self.driver.find_element(By.CSS_SELECTOR, '[onclick="sendRequest()"]')
+        send_button = self.driver.find_element(By.XPATH, '//input[contains(@onclick, "sendRequest")]')
         send_button.click()
 
     def __select_category_group(self) -> None:
@@ -530,7 +530,12 @@ class OfficeSud(Browser):
 
     @staticmethod
     def move_result_when_done(iin: str, paybox: str) -> None:
-        shutil.move(CASE_DIR / f'{iin}_{paybox}', RESULTS_DIR)
+        folder_name = f'{iin}_{paybox}'
+
+        if os.path.exists(RESULTS_DIR / folder_name):
+            shutil.rmtree(RESULTS_DIR / folder_name)
+
+        shutil.move(CASE_DIR / folder_name, RESULTS_DIR)
 
     def process(self, statement_info: dict) -> None:
         self.logger.info("Логинимся на сайте")

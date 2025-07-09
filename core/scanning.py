@@ -2,7 +2,11 @@ import os
 import json
 from datetime import datetime
 
+from loguru import logger
+
 from pathlib import Path
+
+from core.utils.utils import move_folder_with_notification
 
 from settings import CASE_DIR, RESULTS_DIR
 
@@ -26,6 +30,8 @@ def scan_folders() -> str:
             continue
 
         if 'уведомление_об_отправке.pdf' in str(files):
+            logger.info(f'Имеется уведомление. Переносим папку {os.path.join(CASE_DIR, folder)}')
+            move_folder_with_notification(folder)
             continue
 
         # if '_ПлатежПор.pdf' in str(files):
