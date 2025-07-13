@@ -498,7 +498,17 @@ class OfficeSud(Browser):
 
         next_page_button = self.driver.find_element(By.CSS_SELECTOR,
                                                     '[onclick="goToSign(); return false;"]')
-        next_page_button.click()
+
+        clicked = False
+
+        while not clicked:
+            try:
+                next_page_button.click()
+            except ElementClickInterceptedException:
+                pass
+            else:
+                clicked = True
+
         time.sleep(5)
 
     def sign_statement_page(self) -> None:
